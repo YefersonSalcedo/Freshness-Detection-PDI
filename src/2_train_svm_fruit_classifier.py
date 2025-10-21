@@ -22,7 +22,7 @@ print("Clases:", clases)
 
 X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state=42)
 
-print("Entrenando modelo SVM (frutas)...")
+print("Entrenando modelo (Esto demora)...")
 clf = svm.SVC(kernel='linear', probability=True)
 clf.fit(X_train, y_train)
 
@@ -35,15 +35,3 @@ print("Recall (macro):", metrics.recall_score(y_test, y_pred, average='macro'))
 
 joblib.dump(clf, os.path.join(RutaProyecto, "modelo_svm_frutas.pkl"))
 print("\nModelo guardado con éxito como 'modelo_svm_frutas.pkl'")
-
-
-# ----------------------------------------------------------
-# Usar una muestra reducida (para pruebas rápidas)
-# ----------------------------------------------------------
-# 500-2000 es ideal para probar sin tardar mucho.
-"""sample = 1000
-
-if X.shape[0] > sample:
-    X = X[:sample]
-    Y = Y[:sample]
-    print(f"Usando una muestra reducida de {sample} imágenes para entrenamiento.")"""

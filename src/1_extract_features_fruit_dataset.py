@@ -9,7 +9,8 @@ from feature_extractor import extract_features
 # =========================================================================
 
 RutaProyecto = os.getcwd()
-RutaDataset = os.path.join(RutaProyecto, "Unified_Dataset")
+RutaDataset = os.path.join(RutaProyecto, "..", "Unified_Dataset")
+RutaDataset = os.path.abspath(RutaDataset)  # convierte a ruta absoluta
 
 X, Y, clases = [], [], []
 
