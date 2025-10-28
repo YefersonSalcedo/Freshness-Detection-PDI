@@ -27,7 +27,7 @@ Cada imagen se representa mediante un vector que resume su **textura, color y es
 
 ---
 
-### `1_extract_features_fruit_dataset.py` — Construcción del Dataset  
+### `extract_features_fruit_dataset.py` — Construcción del Dataset  
 Este script recorre la carpeta `Unified_Dataset/`, donde las imágenes están organizadas por fruta y condición (por ejemplo, `apple/fresh`, `apple/rotten`).  
 Para cada imagen:
 
@@ -42,7 +42,7 @@ Así se genera el **dataset de entrenamiento** para el modelo.
 
 ---
 
-### `2_train_svm_fruit_classifier.py` — Entrenamiento del Modelo  
+### `train_svm_fruit_classifier.py` — Entrenamiento del Modelo  
 Con los datos procesados, este módulo:
 
 1. Carga `X_train.npy`, `Y_train.npy` y `clases.npy`.  
@@ -56,26 +56,63 @@ Con los datos procesados, este módulo:
 
 ---
 
-### `3_test_fruit_classifier.py` — Clasificación de Nuevas Imágenes  
-Permite realizar pruebas interactivas con imágenes nuevas:
+### `gui_classifie.py` — Interfaz Gráfica para Clasificación de Imágenes  
+Este módulo proporciona una interfaz interactiva que permite clasificar imágenes individuales o carpetas completas utilizando el modelo previamente entrenado.
 
-1. Carga el modelo `modelo_svm_frutas.pkl` y las clases `clases.npy`.  
-2. Abre un cuadro de diálogo (Tkinter) para seleccionar una imagen.  
-3. Extrae sus características con `extract_features(img)`.  
-4. Predice su clase (*fruit_fresh* o *fruit_rotten*) y muestra:
-   - La clase predicha  
-   - El nivel de confianza (%)  
-   - La imagen con la etiqueta superpuesta
+#### Funcionalidades principales:
+1. **Carga del modelo y clases:**
+   Permite importar el modelo entrenado `modelo_svm_frutas.pkl` y las clases `clases.npy` mediante cuadros de diálogo.
 
-Este módulo demuestra el uso práctico del sistema entrenado.
+2. **Selección de imágenes o carpetas:**
+   * Puedes seleccionar una **imagen individual** para prueba.
+   * O una **carpeta completa** (útil para evaluar conjuntos de imágenes o datasets).
+
+4. **Extracción de características:**
+   Cada imagen seleccionada es procesada con la función `extract_features(img)` definida en `feature_extractor.py`, que convierte la imagen en un vector de características compatible con el modelo SVM.
+
+5. **Clasificación:**
+   * El modelo predice la clase de la imagen (por ejemplo, *fruit_fresh* o *fruit_rotten*).
+   * Si el clasificador soporta probabilidades, también muestra el **nivel de confianza (%)** de la predicción.
+   * La imagen se muestra en la ventana con la **etiqueta superpuesta** sobre ella.
+
+6. **Evaluación por carpetas:**
+   Si se selecciona una carpeta con subcarpetas por clase, el sistema genera métricas automáticas de desempeño:
+   * **Exactitud (accuracy)**
+   * **Reporte de clasificación (precision, recall, f1-score)**
+   * **Matriz de confusión**
+
+En caso contrario, muestra un conteo de imágenes clasificadas por clase.
+
+7. **Interfaz amigable y no bloqueante:**
+   Todas las tareas de clasificación se ejecutan en **hilos independientes**, manteniendo la interfaz fluida.
+   Incluye registro en tiempo real de las acciones y resultados en un panel de texto lateral.
+
+**Uso típico:**
+
+1. Ejecutar `gui_classifier.py`.
+2. Cargar el modelo y las clases.
+3. Seleccionar una imagen o carpeta.
+4. Presionar “Clasificar imagen” o “Clasificar carpeta”.
 
 ---
 
-### Nota importante:
-Los archivos de datos generados (`X_train.npy`, `Y_train.npy`, `clases.npy`) y el modelo entrenado (`modelo_svm_frutas.pkl`) no se incluyen en este repositorio debido a su tamaño.
-Para ejecutarlo correctamente, debes:
+### Nota importante
 
-1. Descargar el [dataset original desde Kaggle](https://www.kaggle.com/datasets/zlatan599/fruitquality1).
-2. Ejecutar el script `1_extract_features_fruit_dataset.py` para generar los archivos `.npy`.
-3. Entrenar el modelo con `2_train_svm_fruit_classifier.py` para obtener el archivo `.pkl`.
+Los archivos generados durante el entrenamiento (`X_train.npy`, `Y_train.npy`, `clases.npy`) y el modelo final (`modelo_svm_frutas.pkl`) **no están incluidos en este repositorio** debido a su tamaño.
+
+Dependiendo de lo que desees hacer, sigue una de las siguientes opciones:
+
+#### Si deseas **entrenar el modelo desde cero**:
+
+1. Descarga el [dataset original desde Kaggle](https://www.kaggle.com/datasets/zlatan599/fruitquality1).
+2. Ejecuta el script `extract_features_fruit_dataset.py` para generar los archivos `.npy` con las características y etiquetas.
+3. Entrena el modelo utilizando `train_svm_fruit_classifier.py`, lo que generará el archivo `modelo_svm_frutas.pkl`.
+
+#### Si solo deseas **probar la clasificación con la interfaz gráfica**:
+
+Descarga directamente los archivos ya entrenados desde el siguiente enlace:
+
+[**Modelo y clases — Google Drive**](https://drive.google.com/drive/folders/1lnS6QjRLefLl3hHp6Elh5Mjx-nhwLOky?usp=drive_link)
+
+Luego, simplemente ejecuta `gui_classifier.py`, carga el modelo y las clases, y comienza a clasificar tus imágenes.
 
