@@ -5,8 +5,8 @@ from sklearn import svm, metrics
 import joblib
 
 # =============================================================
-# Entrena un modelo SVM con las características HOG+LBP+LAB
-# y guarda el modelo entrenado como modelo_svm_frutas.pkl
+# Entrena un modelo SVM con las características HOG+LAB
+# y guarda el modelo entrenado como modelo_grande_svm_frutas.pkl
 # =============================================================
 
 RutaProyecto = os.getcwd()

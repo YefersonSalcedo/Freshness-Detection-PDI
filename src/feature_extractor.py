@@ -1,9 +1,8 @@
 import cv2 as cv
 import numpy as np
-from skimage.feature import local_binary_pattern
 
 # ================================================================
-# Función común para extraer características HOG + LBP + Color LAB
+# Función común para extraer características HOG + Color LAB
 # ================================================================
 
 def extract_features(img):
@@ -22,22 +21,21 @@ def extract_features(img):
     # ================================================================
     # =============PREPROCESAMIENTO DE LA IMAGEN======================
     # ================================================================
-    img = cv.resize(img, (224,224))
+    img = cv.resize(img, (112,112))
 
     # Convierte la imagen del espacio de color BGR al espacio LAB.
     # LAB separa la información de luminosidad (L) y color (A,B),
     # lo que facilita mejorar el contraste sin alterar el color.
     img_lab = cv.cvtColor(img, cv.COLOR_BGR2LAB)
-    l, a, b = cv.split(img_lab) #Divide los tres canales: L (luminancia), A (verde-rojo), B (azul-amarillo)
+    l, a, b = cv.split(img_lab) # Divide los tres canales: L (luminancia), A (verde-rojo), B (azul-amarillo)
 
     # Ecualiza el histograma del canal L para mejorar el contraste general.
     # Esto resalta los detalles de textura (arrugas, manchas, moho, etc.)
     l = cv.equalizeHist(l)
-    img_lab = cv.merge((l,a,b)) #Combina nuevamente los canales L, A y B en una sola imagen LAB.
+    img_lab_eq = cv.merge((l, a, b)) # Combina nuevamente los canales L, A y B en una sola imagen LAB.
 
-    # Convierte la imagen LAB a BGR (para compatibilidad)
-    # y luego a escala de grises, para aplicar HOG y LBP más adelante.
-    img_gray = cv.cvtColor(img_lab, cv.COLOR_LAB2BGR)
+    # Convierte la imagen LAB a escala de grises para aplicar HOG.
+    img_gray = cv.cvtColor(img_lab_eq, cv.COLOR_LAB2BGR)
     img_gray = cv.cvtColor(img_gray, cv.COLOR_BGR2GRAY)
 
 
@@ -47,40 +45,16 @@ def extract_features(img):
 
     # HOG se usa para capturar la forma y los bordes de los objetos.
     # Parámetros:
-    # - winSize = (224,224): tamaño total de la imagen
+    # - winSize = (112,112): tamaño total de la imagen
     # - blockSize = (16,16): tamaño de los bloques de análisis
     # - blockStride = (8,8): paso entre bloques
     # - cellSize = (8,8): tamaño de las celdas dentro de cada bloque
     # - nbins = 9: número de orientaciones de gradiente
-    hog = cv.HOGDescriptor((224,224), (16,16), (8,8), (8,8), 9)
+    hog = cv.HOGDescriptor((112,112), (16,16), (8,8), (8,8), 9)
 
     # Calcula el descriptor HOG sobre la imagen en escala de grises
     # y lo convierte en un vector unidimensional (flatten).
     hog_desc = hog.compute(img_gray).flatten()
-
-
-
-    # ================================================================
-    # =============LBP (Local Binary Patterns)========================
-    # ================================================================
-
-    # LBP analiza la textura local comparando cada píxel con sus vecinos.
-    # Detecta microtexturas (rugosidad, manchas, moho, etc.)
-    radius = 3              # Radio de vecindad
-    n_points = 8 * radius   # Número de puntos vecinos (24)
-
-    # Calcula la imagen de patrones binarios locales (LBP)
-    lbp = local_binary_pattern(img_gray, n_points, radius, method='uniform')
-
-    # Genera un histograma de los valores LBP obtenidos.
-    # Este histograma representa cuántas veces aparecen ciertas texturas.
-    hist_lbp, _ = np.histogram(lbp.ravel(), bins=np.arange(0, n_points+3), range=(0, n_points+2))
-
-    # Convierte a flotante y normaliza el histograma
-    # (para que la suma total sea 1). Así no depende del tamaño de la imagen.
-    hist_lbp = hist_lbp.astype("float")
-    hist_lbp /= (hist_lbp.sum() + 1e-6)
-
 
 
     # ================================================================
@@ -97,13 +71,13 @@ def extract_features(img):
 
 
     # ================================================================
-    # ===========CONCATENAR TODAS LAS CARACTERISTICAS=================
+    # ===========CONCATENAR TODAS LAS CARACTERÍSTICAS=================
     # ================================================================
 
     # Combina todos los vectores en un solo arreglo unidimensional:
-    # [ HOG features | LBP histogram | LAB mean | LAB std ]
+    # [HOG features | LAB mean | LAB std]
     # Esto forma el vector de características completo que representará a la imagen.
-    features = np.concatenate((hog_desc, hist_lbp, mean_color, std_color))
+    features = np.concatenate((hog_desc, mean_color, std_color))
 
     # Devuelve el vector de características resultante.
     return features

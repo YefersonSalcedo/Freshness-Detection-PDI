@@ -4,7 +4,7 @@ import numpy as np
 from feature_extractor import extract_features
 
 # =========================================================================
-# Extrae las características HOG + LBP + LAB de todas las imágenes
+# Extrae las características HOG + LAB de todas las imágenes
 # del dataset "Unified_Dataset" y las guarda como X_train.npy / Y_train.npy
 # =========================================================================
 
@@ -35,7 +35,7 @@ for fruit in sorted(os.listdir(RutaDataset)):
                 img = cv.imread(ruta_img, cv.IMREAD_GRAYSCALE)
                 if img is None:
                     continue
-                img = cv.resize(img, (224, 224))
+                img = cv.resize(img, (112, 112))
                 X.append(extract_features(img))
                 Y.append(idx)
 
