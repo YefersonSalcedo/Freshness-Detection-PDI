@@ -7,7 +7,6 @@ import cv2 as cv
 import joblib
 import numpy as np
 from PIL import Image, ImageTk
-from sklearn import metrics
 
 from feature_extractor import extract_features
 
@@ -20,7 +19,10 @@ class GUIClassifier(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("Fruit Freshness Classifier")
-        self.geometry("900x600")
+        self.geometry("1100x700")
+
+        # Tamaño fijo para todas las imágenes
+        self.IMAGE_SIZE = (500, 500)
 
         # Estado
         self.model = None
@@ -60,26 +62,27 @@ class GUIClassifier(tk.Tk):
         # Imagen
         frm_image = ttk.LabelFrame(pan, text="Imagen")
         frm_image.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        self.canvas = tk.Label(frm_image)
+        self.canvas = tk.Label(frm_image, bg='gray85')
         self.canvas.pack(fill=tk.BOTH, expand=True, padx=8, pady=8)
 
         # Resultados
         frm_results = ttk.LabelFrame(pan, text="Resultados / Log")
         frm_results.pack(side=tk.RIGHT, fill=tk.BOTH, expand=False)
-        frm_results.config(width=380)
+        frm_results.config(width=450)
 
         self.lbl_model = ttk.Label(frm_results, text="Modelo: (no cargado)")
-        self.lbl_model.pack(anchor=tk.W, padx=6, pady=(6,0))
+        self.lbl_model.pack(anchor=tk.W, padx=6, pady=(6, 0))
 
         self.lbl_image = ttk.Label(frm_results, text="Imagen: (no seleccionada)")
-        self.lbl_image.pack(anchor=tk.W, padx=6, pady=(0,6))
+        self.lbl_image.pack(anchor=tk.W, padx=6, pady=(0, 6))
 
-        self.txt = tk.Text(frm_results, width=50, height=30)
-        self.txt.pack(padx=6, pady=6)
+        self.txt = tk.Text(frm_results, width=55, height=40)
+        self.txt.pack(padx=6, pady=6, fill=tk.BOTH, expand=True)
 
     # ---------- acciones UI ----------
     def load_model(self):
-        path = filedialog.askopenfilename(title="Selecciona archivo de modelo (.pkl)", filetypes=[("Pickle", "*.pkl"), ("All files", "*")])
+        path = filedialog.askopenfilename(title="Selecciona archivo de modelo (.pkl)",
+                                          filetypes=[("Pickle", "*.pkl"), ("All files", "*")])
         if not path:
             return
         try:
@@ -93,7 +96,8 @@ class GUIClassifier(tk.Tk):
         self.log(f"Modelo cargado: {path}")
 
     def load_classes(self):
-        path = filedialog.askopenfilename(title="Selecciona archivo de clases (.npy)", filetypes=[("NumPy", "*.npy"), ("All files", "*")])
+        path = filedialog.askopenfilename(title="Selecciona archivo de clases (.npy)",
+                                          filetypes=[("NumPy", "*.npy"), ("All files", "*")])
         if not path:
             return
         try:
@@ -105,7 +109,8 @@ class GUIClassifier(tk.Tk):
         self.log(f"Clases cargadas: {path} -> {list(clases)}")
 
     def select_image(self):
-        path = filedialog.askopenfilename(title="Selecciona imagen", filetypes=[("Imagen", "*.jpg *.jpeg *.png"), ("All files", "*")])
+        path = filedialog.askopenfilename(title="Selecciona imagen",
+                                          filetypes=[("Imagen", "*.jpg *.jpeg *.png"), ("All files", "*")])
         if not path:
             return
         self.image_path = path
@@ -122,7 +127,8 @@ class GUIClassifier(tk.Tk):
         self.lbl_image.config(text=f"Carpeta: {os.path.basename(path)}")
         self.log(f"Carpeta seleccionada: {path}")
 
-    def show_image(self, path, maxsize=(400, 400)):
+    def show_image(self, path):
+        """Muestra la imagen con tamaño fijo definido en self.IMAGE_SIZE"""
         try:
             pil = Image.open(path).convert('RGB')
         except Exception:
@@ -132,8 +138,11 @@ class GUIClassifier(tk.Tk):
                 return
             img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
             pil = Image.fromarray(img)
-        pil.thumbnail(maxsize)
-        self.photo = ImageTk.PhotoImage(pil)
+
+        # Redimensionar a tamaño fijo SIN mantener proporción (estirando la imagen)
+        pil_resized = pil.resize(self.IMAGE_SIZE, Image.Resampling.LANCZOS)
+
+        self.photo = ImageTk.PhotoImage(pil_resized)
         self.canvas.config(image=self.photo)
 
     def log(self, text):
@@ -189,14 +198,37 @@ class GUIClassifier(tk.Tk):
 
         if probs is not None:
             conf = np.max(probs)
-            conf_text = f" (Confianza: {conf*100:.1f}%)"
+            conf_text = f" (Confianza: {conf * 100:.1f}%)"
 
         self.log(f"Resultado: {class_name}{conf_text}")
         # actualizar imagen (ya mostrada), y poner etiqueta arriba
         display_label = f"{class_name}{conf_text}"
         img_disp = cv.imread(self.image_path)
         if img_disp is not None:
-            cv.putText(img_disp, display_label, (10, 30), cv.FONT_HERSHEY_SIMPLEX, 0.9, (0,255,0), 2)
+            # Redimensionar imagen primero al tamaño fijo
+            img_disp = cv.resize(img_disp, self.IMAGE_SIZE)
+
+            # Calcular tamaño del texto para ajustar la escala
+            font = cv.FONT_HERSHEY_SIMPLEX
+            font_scale = 0.7
+            thickness = 2
+            (text_width, text_height), baseline = cv.getTextSize(display_label, font, font_scale, thickness)
+
+            # Ajustar escala si el texto es demasiado largo
+            max_width = self.IMAGE_SIZE[0] - 20  # Dejar margen
+            if text_width > max_width:
+                font_scale = font_scale * (max_width / text_width)
+                (text_width, text_height), baseline = cv.getTextSize(display_label, font, font_scale, thickness)
+
+            # Fondo semi-transparente para el texto
+            padding = 5
+            box_coords = ((5, 5), (text_width + padding * 2 + 5, text_height + padding * 2 + 10))
+            cv.rectangle(img_disp, box_coords[0], box_coords[1], (0, 0, 0), -1)
+            cv.rectangle(img_disp, box_coords[0], box_coords[1], (0, 255, 0), 2)
+
+            # Texto en la parte superior con fondo
+            cv.putText(img_disp, display_label, (10, text_height + 10), font, font_scale, (0, 255, 0), thickness)
+
             tmp_path = os.path.join(os.path.dirname(self.image_path), "__tmp_preview.jpg")
             cv.imwrite(tmp_path, img_disp)
             self.show_image(tmp_path)
@@ -220,7 +252,7 @@ class GUIClassifier(tk.Tk):
         files = []
         for root, dirs, filenames in os.walk(self.image_path):
             for f in filenames:
-                if f.lower().endswith(('.jpg','.jpeg','.png')):
+                if f.lower().endswith(('.jpg', '.jpeg', '.png')):
                     files.append(os.path.join(root, f))
 
         if not files:
@@ -257,29 +289,23 @@ class GUIClassifier(tk.Tk):
             else:
                 y_true.append(parent)
 
-        # si y_true contiene indices válidos (int) podemos calcular métricas
-        valid_pairs = [(t, p) for t, p in zip(y_true, y_pred) if isinstance(t, (int, np.integer))]
-        if valid_pairs:
-            t_vals, p_vals = zip(*valid_pairs)
-            acc = metrics.accuracy_score(t_vals, p_vals)
-            report = metrics.classification_report(t_vals, p_vals, target_names=[str(c) for c in self.classes], zero_division=0)
-            cm = metrics.confusion_matrix(t_vals, p_vals)
-            self.log(f"Accuracy: {acc:.4f}")
-            self.log("Classification report:\n" + report)
-            self.log("Confusion matrix:\n" + np.array2string(cm))
-        else:
-            # mostrar conteo de predicciones por clase
-            unique, counts = np.unique(y_pred, return_counts=True)
-            summary = "Conteo predicciones:\n"
-            for u, c in zip(unique, counts):
-                name = str(u)
-                if self.classes is not None:
-                    try:
-                        name = str(self.classes[u])
-                    except Exception:
-                        pass
-                summary += f"  {name}: {c}\n"
-            self.log(summary)
+        # Mostrar conteo de predicciones por clase
+        unique, counts = np.unique(y_pred, return_counts=True)
+        self.log("\n" + "=" * 40)
+        self.log("RESULTADOS DE CLASIFICACIÓN")
+        self.log("=" * 40)
+        self.log(f"Total de imágenes procesadas: {len(y_pred)}\n")
+        self.log("Conteo por clase:")
+        for u, c in zip(unique, counts):
+            name = str(u)
+            if self.classes is not None:
+                try:
+                    name = str(self.classes[u])
+                except Exception:
+                    pass
+            percentage = (c / len(y_pred)) * 100
+            self.log(f"  {name}: {c} ({percentage:.1f}%)")
+        self.log("=" * 40 + "\n")
 
 
 if __name__ == '__main__':
