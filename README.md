@@ -19,8 +19,7 @@ El proyecto está compuesto por **cuatro módulos principales**, que forman un f
 ### `feature_extractor.py` — Extracción de Características  
 Define la función `extract_features(img)`, que convierte cada imagen en un vector de características combinando:
 
-- **HOG (Histogram of Oriented Gradients):** captura la forma y contornos de la fruta.  
-- **LBP (Local Binary Patterns):** analiza texturas locales como rugosidades o manchas.  
+- **HOG (Histogram of Oriented Gradients):** captura la forma y contornos de la fruta.   
 - **Color LAB (media y desviación estándar):** mide los tonos y variaciones cromáticas asociadas a la madurez o descomposición.
 
 Cada imagen se representa mediante un vector que resume su **textura, color y estructura**.
@@ -31,7 +30,7 @@ Cada imagen se representa mediante un vector que resume su **textura, color y es
 Este script recorre la carpeta `Unified_Dataset/`, donde las imágenes están organizadas por fruta y condición (por ejemplo, `apple/fresh`, `apple/rotten`).  
 Para cada imagen:
 
-1. Se redimensiona a 224×224 píxeles.  
+1. Se redimensiona a 112×112 píxeles.  
 2. Se extraen las características usando `extract_features(img)`.  
 3. Se almacenan los resultados en tres archivos:
    - `X_train.npy` → matriz de características  
@@ -76,12 +75,7 @@ Este módulo proporciona una interfaz interactiva que permite clasificar imágen
    * La imagen se muestra en la ventana con la **etiqueta superpuesta** sobre ella.
 
 6. **Evaluación por carpetas:**
-   Si se selecciona una carpeta con subcarpetas por clase, el sistema genera métricas automáticas de desempeño:
-   * **Exactitud (accuracy)**
-   * **Reporte de clasificación (precision, recall, f1-score)**
-   * **Matriz de confusión**
-
-En caso contrario, muestra un conteo de imágenes clasificadas por clase.
+   Si se selecciona una carpeta con subcarpetas por clase, el sistema muestra un conteo de imágenes clasificadas por clase.
 
 7. **Interfaz amigable y no bloqueante:**
    Todas las tareas de clasificación se ejecutan en **hilos independientes**, manteniendo la interfaz fluida.
@@ -93,6 +87,14 @@ En caso contrario, muestra un conteo de imágenes clasificadas por clase.
 2. Cargar el modelo y las clases.
 3. Seleccionar una imagen o carpeta.
 4. Presionar “Clasificar imagen” o “Clasificar carpeta”.
+
+---
+
+### Archivos de Investigación
+
+El proyecto incluye un módulo adicional de **investigación sobre filtros**. Este archivo contiene experimentos y pruebas con diferentes técnicas de filtrado (como filtros gaussianos, logaritmicos, media, entre otros) que fueron explorados durante el desarrollo del proyecto.
+
+**Nota:** Este módulo es únicamente de carácter exploratorio y **no está integrado** en el flujo principal de clasificación. Su propósito es documentar las técnicas investigadas y servir como referencia para futuras mejoras o extensiones del sistema.
 
 ---
 
